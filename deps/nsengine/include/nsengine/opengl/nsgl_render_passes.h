@@ -1,0 +1,142 @@
+/*!
+  \file nsgl_render_passes.h
+
+  \brief Definition file for nsgl_render_passes class
+
+  This file contains all of the neccessary definitions for the nsgl_render_passes class.
+
+  \author Daniel Randle
+  \date Feb 23 2016
+  \copywrite Earth Banana Games 2013
+*/
+
+#ifndef NSGL_RENDER_PASSES_H
+#define NSGL_RENDER_PASSES_H
+
+#include <nsplatform.h>
+#include <nsmath/nsmath.h>
+#include <nsvideo_driver.h>
+
+#ifdef GL_4_4
+#define SHADER_DIR "opengl4_1/"
+#define ORDER_INDEPENDENT_TRANSLUCENCY
+#elif defined(GL_4_1)
+#define SHADER_DIR "opengl4_1/"
+#endif
+
+struct gl_ctxt;
+struct nsgl_framebuffer;
+#ifdef ORDER_INDEPENDENT_TRANSLUCENCY
+struct translucent_buffers;
+#endif
+struct light_draw_call;
+
+struct opengl_state
+{
+	opengl_state():
+		depth_write(false),
+		depth_test(false),
+		stencil_test(false),
+		blending(false),
+		culling(false),
+		cull_face(0),
+		clear_mask(0),
+		blend_func(),
+		blend_eqn(0),
+		stencil_func(),
+		stencil_op_back(),
+		stencil_op_front()
+	{}
+	
+	bool depth_write; // material
+	bool depth_test; // material
+	bool stencil_test; // material
+	bool blending; // renderer
+	bool culling; // material
+	int32 cull_face; // material
+	int32 clear_mask;
+	ivec2 blend_func; // renderer
+	int32 blend_eqn;
+	ivec3 stencil_func; // submesh
+	ivec3 stencil_op_back; // submesh
+	ivec3 stencil_op_front;
+	ivec4 current_viewport;
+};
+
+struct gl_render_pass : public render_pass
+{
+	gl_render_pass():
+		render_pass(),
+		ren_target(nullptr),
+		use_vp_size(true)
+	{}
+
+	virtual ~gl_render_pass() {}
+
+	virtual void setup();
+
+	virtual void render() = 0;
+
+	virtual void finish() {}
+
+	bool use_vp_size;
+	nsgl_framebuffer * ren_target;
+	gl_ctxt * driver_ctxt;
+	opengl_state gl_state;
+};
+
+struct gbuffer_single_draw_render_pass : public gl_render_pass
+{
+	virtual void render();
+};
+
+#ifdef ORDER_INDEPENDENT_TRANSLUCENCY
+struct oit_render_pass : public gl_render_pass
+{
+	virtual void render();
+	translucent_buffers * tbuffers;
+};
+#endif
+
+struct sorted_translucency_render_pass : public gl_render_pass
+{
+	virtual void render() {}
+};
+
+struct light_shadow_pass : public gl_render_pass
+{
+	virtual void render();
+	light_draw_call * ldc;
+};
+
+struct light_pass : public gl_render_pass
+{
+	virtual void render();
+	light_shadow_pass * rpass;
+#ifdef ORDER_INDEPENDENT_TRANSLUCENCY	
+	translucent_buffers * tbuffers;
+#endif
+};
+
+struct culled_light_pass : public light_pass
+{
+	virtual void render();
+};
+
+struct final_render_pass : public gl_render_pass
+{
+	virtual void render();
+	nsgl_framebuffer * read_buffer;
+};
+
+struct selection_render_pass : public gl_render_pass
+{
+	virtual void render();
+};
+
+struct ui_render_pass : public gl_render_pass
+{
+	virtual void render();
+};
+
+#endif
