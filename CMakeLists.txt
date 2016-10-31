@@ -1,7 +1,7 @@
-project(sample)
+project(pizza_town)
 cmake_minimum_required(VERSION 2.8)
 
-set(TARGET sample_prog)
+set(TARGET pizza_town)
 
 # Set the source dir
 set(SAMPLE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
