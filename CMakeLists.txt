@@ -31,6 +31,10 @@ file(GLOB HEADER_FILES
 )
 
 set(PLATFORM "x64" CACHE STRING "Platform for which to run cmake (run for each build type)")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/${PLATFORM})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/${PLATFORM})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${PLATFORM})
+set(CMAKE_DEBUG_POSTFIX d)
 
 # Preprocessor definitions - these are required since some of the included header files use them (try without after get working)
 add_definitions(-DGLEW_MX -DGLEW_STATIC -DSTB_IMAGE_WRITE_IMPLEMENTATION -DSTB_IMAGE_IMPLEMENTATION)
@@ -66,12 +70,22 @@ elseif (WIN32)
 endif()
 
 link_directories(${PROJECT_SOURCE_DIR}/deps/nsengine/lib/${PLATFORM})
+message("Adding link directory: ${PROJECT_SOURCE_DIR}/deps/nsengine/lib/${PLATFORM}")
 
 # This is here simply so Qt shows the files correctly in the project window
 add_custom_target(headers SOURCES ${HEADER_FILES})
 add_custom_target(sources SOURCES ${SRC_FILES})
 
 add_executable(${TARGET} ${SRC_FILES})
+set_target_properties(${TARGET} PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+if (WIN32)
+    set_target_properties(${TARGET} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} )
+    set_target_properties(${TARGET} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} )
+    set_target_properties(${TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+    set_target_properties(${TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+    set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} )
+    set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} )
+endif (WIN32)
 
 # Link all libraries
 # The order here kind of matters - nsmath and nsengine need to go first cause they are missing symbols
@@ -104,9 +118,9 @@ if (UNIX)
     general openal)
 elseif (WIN32)
     target_link_libraries(${TARGET}
-    general assimp-vc14-md
-    debug glfw3d
-    optimized glfw3
+    general assimp-vc140-mt
+    debug glfw3ddll
+    optimized glfw3dll
     general libsndfile-1
     general OpenAL32
     DbgHelp)

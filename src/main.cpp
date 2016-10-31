@@ -13,9 +13,6 @@
 #include <component/nscam_comp.h>
 
 
-void setup_input_map(nsplugin * plg);
-
-
 int main()
 {
     nsengine e;
